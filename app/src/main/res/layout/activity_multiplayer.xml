@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="24dp"
+    android:background="#111827">
+
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_media_previous"
+        android:background="@android:color/transparent"
+        android:layout_gravity="start"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="GAME OF LIFE"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Multiplayer"
+        android:textSize="20sp"
+        android:textColor="#BBBBBB"
+        android:layout_marginBottom="48dp"/>
+
+    <Button
+        android:id="@+id/btnHostGame"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:text="HOST GAME"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnJoinGame"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:text="JOIN GAME"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnRandomMatch"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:text="RANDOM MATCH"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fake Lobby List"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="#1F2937">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lobby #1 - Waiting"
+            android:textColor="#FFFFFF"
+            android:padding="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lobby #2 - 1/2 Players"
+            android:textColor="#FFFFFF"
+            android:padding="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lobby #3 - Full"
+            android:textColor="#FFFFFF"
+            android:padding="8dp"/>
+
+    </LinearLayout>
+
+</LinearLayout>
