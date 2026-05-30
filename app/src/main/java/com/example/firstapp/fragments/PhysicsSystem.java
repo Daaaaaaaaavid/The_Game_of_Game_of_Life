@@ -2,8 +2,8 @@ package com.example.firstapp.fragments;
 
 public class PhysicsSystem {
 
-    private static final double WATER_FALL_CHANCE = 0.65;
-    private static final double FIRE_RISE_CHANCE = 0.65;
+    private static final double WATER_FALL_CHANCE = 0.90;
+    private static final double FIRE_RISE_CHANCE = 0.80;
 
     public void apply(Cell[][] grid, int cols, int rows) {
         applyWaterGravity(grid, cols, rows);
