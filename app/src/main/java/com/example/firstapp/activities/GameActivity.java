@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.firstapp.fragments.GameView;
+import com.example.firstapp.game.CellType;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -27,11 +28,11 @@ public class GameActivity extends AppCompatActivity {
         toolbar.setGravity(Gravity.CENTER);
         toolbar.setPadding(8, 8, 8, 8);
 
-        addCellButton(toolbar, "Standard", GameView.SelectedCellType.STANDARD);
-        addCellButton(toolbar, "Feuer", GameView.SelectedCellType.FIRE);
-        addCellButton(toolbar, "Wasser", GameView.SelectedCellType.WATER);
-        addCellButton(toolbar, "Erde", GameView.SelectedCellType.EARTH);
-        addCellButton(toolbar, "Pflanze", GameView.SelectedCellType.PLANT);
+        addCellButton(toolbar, "Standard", CellType.STANDARD);
+        addCellButton(toolbar, "Feuer", CellType.FIRE);
+        addCellButton(toolbar, "Wasser", CellType.WATER);
+        addCellButton(toolbar, "Erde", CellType.EARTH);
+        addCellButton(toolbar, "Pflanze", CellType.PLANT);
 
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -47,11 +48,7 @@ public class GameActivity extends AppCompatActivity {
         setContentView(root);
     }
 
-    private void addCellButton(
-            LinearLayout toolbar,
-            String text,
-            GameView.SelectedCellType cellType
-    ) {
+    private void addCellButton(LinearLayout toolbar, String text, CellType cellType) {
         Button button = new Button(this);
         button.setText(text);
         button.setOnClickListener(v -> gameView.setSelectedCellType(cellType));

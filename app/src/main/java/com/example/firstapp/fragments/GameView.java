@@ -8,51 +8,38 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 
-
+import com.example.firstapp.game.Cell;
+import com.example.firstapp.game.CellType;
+import com.example.firstapp.game.GameEngine;
+import com.example.firstapp.game.Grid;
 
 public class GameView extends View {
 
-    public enum SelectedCellType {
-        STANDARD, FIRE, WATER, EARTH, PLANT
-    }
+    private static final int COLS = 80;
+    private static final int ROWS = 160;
+    private static final int TICK_DELAY = 200;
 
-    private final int cols = 80;
-    private final int rows = 160;
-
-    private Cell[][] grid;
-    private Cell[][] buffer;
-
-    private Paint gridPaint;
-    private Paint cellPaint;
+    private final GameEngine gameEngine;
+    private final Paint cellPaint;
+    private final Handler handler;
 
     private float cellWidth;
     private float cellHeight;
 
-    private Handler handler = new Handler();
     private boolean running = true;
-    private int tickDelay = 200;
-
-    private PhysicsSystem physicsSystem;
-
-    private SelectedCellType selectedCellType = SelectedCellType.STANDARD;
+    private CellType selectedCellType = CellType.STANDARD;
 
     public GameView(Context context) {
         super(context);
 
-        grid = new Cell[cols][rows];
-        buffer = new Cell[cols][rows];
-
-        gridPaint = new Paint();
-        gridPaint.setColor(Color.LTGRAY);
-
+        gameEngine = new GameEngine(COLS, ROWS);
         cellPaint = new Paint();
-
-        physicsSystem = new PhysicsSystem();
+        handler = new Handler();
 
         startLoop();
     }
 
-    public void setSelectedCellType(SelectedCellType selectedCellType) {
+    public void setSelectedCellType(CellType selectedCellType) {
         this.selectedCellType = selectedCellType;
     }
 
@@ -61,114 +48,33 @@ public class GameView extends View {
             @Override
             public void run() {
                 if (running) {
-                    stepGame();
+                    gameEngine.step();
                     invalidate();
                 }
-                handler.postDelayed(this, tickDelay);
+
+                handler.postDelayed(this, TICK_DELAY);
             }
-        }, tickDelay);
-    }
-
-    private void stepGame() {
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
-                Cell current = grid[x][y];
-
-                if (current == null) {
-                    int neighbors = countAliveNeighbors(x, y);
-
-                    if (neighbors == 3) {
-                        buffer[x][y] = createCellFromNeighbors(x, y);
-                    } else {
-                        buffer[x][y] = null;
-                    }
-                } else {
-                    buffer[x][y] = current.nextState(grid, x, y);
-                }
-            }
-        }
-
-        physicsSystem.apply(buffer, cols, rows);
-
-        Cell[][] temp = grid;
-        grid = buffer;
-        buffer = temp;
-    }
-
-    private int countAliveNeighbors(int x, int y) {
-        int count = 0;
-
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (dx == 0 && dy == 0) continue;
-
-                int nx = x + dx;
-                int ny = y + dy;
-
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                    if (grid[nx][ny] != null) count++;
-                }
-            }
-        }
-
-        return count;
+        }, TICK_DELAY);
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        cellWidth = (float) w / cols;
-        cellHeight = (float) h / rows;
-    }
-
-    private Cell createCellFromNeighbors(int x, int y) {
-        int fire = 0;
-        int water = 0;
-        int earth = 0;
-        int plant = 0;
-        int standard = 0;
-
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                if (dx == 0 && dy == 0) continue;
-
-                int nx = x + dx;
-                int ny = y + dy;
-
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                    Cell cell = grid[nx][ny];
-
-                    if (cell instanceof FireCell) fire++;
-                    else if (cell instanceof WaterCell) water++;
-                    else if (cell instanceof EarthCell) earth++;
-                    else if (cell instanceof PlantCell) plant++;
-                    else if (cell instanceof StandardCell) standard++;
-                }
-            }
-        }
-
-        if (fire >= water && fire >= earth && fire >= plant && fire >= standard) {
-            return new FireCell();
-        } else if (water >= earth && water >= plant && water >= standard) {
-            return new WaterCell();
-        } else if (earth >= plant && earth >= standard) {
-            return new EarthCell();
-        } else if (plant >= standard) {
-            return new PlantCell();
-        } else {
-            return new StandardCell();
-        }
+        cellWidth = (float) w / COLS;
+        cellHeight = (float) h / ROWS;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawColor(Color.WHITE);
 
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
-                Cell cell = grid[x][y];
+        Grid grid = gameEngine.getGrid();
+
+        for (int x = 0; x < grid.getCols(); x++) {
+            for (int y = 0; y < grid.getRows(); y++) {
+                Cell cell = grid.getCell(x, y);
 
                 if (cell != null) {
-                    cellPaint.setColor(cell.getColor());
+                    cellPaint.setColor(cell.getType().getColor());
 
                     float left = x * cellWidth;
                     float top = y * cellHeight;
@@ -187,35 +93,19 @@ public class GameView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN ||
-                event.getAction() == MotionEvent.ACTION_MOVE) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN
+                || event.getAction() == MotionEvent.ACTION_MOVE) {
 
             int x = (int) (event.getX() / cellWidth);
             int y = (int) (event.getY() / cellHeight);
 
-            if (x >= 0 && x < cols && y >= 0 && y < rows) {
-                grid[x][y] = createSelectedCell();
+            if (gameEngine.getGrid().isInside(x, y)) {
+                gameEngine.setCell(x, y, selectedCellType);
                 invalidate();
             }
         }
 
         return true;
-    }
-
-    private Cell createSelectedCell() {
-        switch (selectedCellType) {
-            case FIRE:
-                return new FireCell();
-            case WATER:
-                return new WaterCell();
-            case EARTH:
-                return new EarthCell();
-            case PLANT:
-                return new PlantCell();
-            case STANDARD:
-            default:
-                return new StandardCell();
-        }
     }
 
     public void toggleRunning() {
