@@ -28,7 +28,6 @@ public class GameActivity extends AppCompatActivity {
         toolbar.setGravity(Gravity.CENTER);
         toolbar.setPadding(8, 8, 8, 8);
 
-        addCellButton(toolbar, "Standard", CellType.STANDARD);
         addCellButton(toolbar, "Feuer", CellType.FIRE);
         addCellButton(toolbar, "Wasser", CellType.WATER);
         addCellButton(toolbar, "Erde", CellType.EARTH);

@@ -2,7 +2,7 @@ package com.example.firstapp.fragments;
 
 import android.graphics.Color;
 
-public class PlantCell extends StandardCell {
+public class PlantCell extends Cell {
     @Override
     public int getColor() {
         return Color.GREEN;

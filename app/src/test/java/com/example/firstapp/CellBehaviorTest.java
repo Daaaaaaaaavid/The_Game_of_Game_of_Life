@@ -2,7 +2,6 @@ package com.example.firstapp;
 
 
 import com.example.firstapp.fragments.Cell;
-import com.example.firstapp.fragments.StandardCell;
 import com.example.firstapp.fragments.FireCell;
 import com.example.firstapp.fragments.WaterCell;
 import com.example.firstapp.fragments.EarthCell;

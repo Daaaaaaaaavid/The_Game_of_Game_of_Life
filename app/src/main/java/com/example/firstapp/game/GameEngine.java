@@ -27,13 +27,8 @@ public class GameEngine {
 
     private Cell calculateNextCell(int x, int y) {
         Cell currentCell = grid.getCell(x, y);
-        int livingNeighbors = grid.countLivingNeighbors(x, y);
 
         if (currentCell == null) {
-            if (livingNeighbors == 3) {
-                return CellFactory.create(CellType.STANDARD);
-            }
-
             return null;
         }
 
@@ -42,26 +37,22 @@ public class GameEngine {
                 if (grid.hasNeighborOfType(x, y, CellType.WATER)) {
                     return null;
                 }
-                return currentCell;
+                return CellFactory.create(CellType.FIRE);
 
             case WATER:
-                return currentCell;
+                return CellFactory.create(CellType.WATER);
 
             case EARTH:
                 if (grid.hasNeighborOfType(x, y, CellType.WATER)) {
                     return CellFactory.create(CellType.PLANT);
                 }
-                return currentCell;
+                return CellFactory.create(CellType.EARTH);
 
             case PLANT:
-                return currentCell;
+                return CellFactory.create(CellType.PLANT);
 
-            case STANDARD:
             default:
-                if (livingNeighbors < 2 || livingNeighbors > 3) {
-                    return null;
-                }
-                return currentCell;
+                return null;
         }
     }
 

@@ -15,32 +15,29 @@ import com.example.firstapp.game.Grid;
 
 public class GameView extends View {
 
-    private static final int COLS = 80;
-    private static final int ROWS = 160;
-    private static final int TICK_DELAY = 200;
+    private final int cols = 80;
+    private final int rows = 160;
 
-    private final GameEngine gameEngine;
-    private final Paint cellPaint;
-    private final Handler handler;
+    private final GameEngine engine;
+    private final Paint paint = new Paint();
+    private final Handler handler = new Handler();
 
     private float cellWidth;
     private float cellHeight;
 
     private boolean running = true;
-    private CellType selectedCellType = CellType.STANDARD;
+    private int tickDelay = 200;
+
+    private CellType selectedCellType = CellType.FIRE;
 
     public GameView(Context context) {
         super(context);
-
-        gameEngine = new GameEngine(COLS, ROWS);
-        cellPaint = new Paint();
-        handler = new Handler();
-
+        engine = new GameEngine(cols, rows);
         startLoop();
     }
 
-    public void setSelectedCellType(CellType selectedCellType) {
-        this.selectedCellType = selectedCellType;
+    public void setSelectedCellType(CellType type) {
+        selectedCellType = type;
     }
 
     private void startLoop() {
@@ -48,43 +45,39 @@ public class GameView extends View {
             @Override
             public void run() {
                 if (running) {
-                    gameEngine.step();
+                    engine.step();
                     invalidate();
                 }
-
-                handler.postDelayed(this, TICK_DELAY);
+                handler.postDelayed(this, tickDelay);
             }
-        }, TICK_DELAY);
+        }, tickDelay);
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        cellWidth = (float) w / COLS;
-        cellHeight = (float) h / ROWS;
+        cellWidth = (float) w / cols;
+        cellHeight = (float) h / rows;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.drawColor(Color.WHITE);
 
-        Grid grid = gameEngine.getGrid();
+        Grid grid = engine.getGrid();
 
-        for (int x = 0; x < grid.getCols(); x++) {
-            for (int y = 0; y < grid.getRows(); y++) {
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
                 Cell cell = grid.getCell(x, y);
 
                 if (cell != null) {
-                    cellPaint.setColor(cell.getType().getColor());
-
-                    float left = x * cellWidth;
-                    float top = y * cellHeight;
+                    paint.setColor(cell.getType().getColor());
 
                     canvas.drawRect(
-                            left,
-                            top,
-                            left + cellWidth,
-                            top + cellHeight,
-                            cellPaint
+                            x * cellWidth,
+                            y * cellHeight,
+                            (x + 1) * cellWidth,
+                            (y + 1) * cellHeight,
+                            paint
                     );
                 }
             }
@@ -93,14 +86,14 @@ public class GameView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN
-                || event.getAction() == MotionEvent.ACTION_MOVE) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN ||
+                event.getAction() == MotionEvent.ACTION_MOVE) {
 
             int x = (int) (event.getX() / cellWidth);
             int y = (int) (event.getY() / cellHeight);
 
-            if (gameEngine.getGrid().isInside(x, y)) {
-                gameEngine.setCell(x, y, selectedCellType);
+            if (x >= 0 && x < cols && y >= 0 && y < rows) {
+                engine.setCell(x, y, selectedCellType);
                 invalidate();
             }
         }

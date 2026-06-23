@@ -1,13 +1,19 @@
 package com.example.firstapp.fragments;
 
-import android.graphics.Color;
-
 public abstract class Cell {
     public boolean alive = true;
 
     public abstract int getColor();
 
-    public abstract Cell nextState(Cell[][] grid, int x, int y);
+    public Cell nextState(Cell[][] grid, int x, int y) {
+        int neighbors = countAliveNeighbors(grid, x, y);
+
+        if (neighbors < 2 || neighbors > 3) {
+            return null;
+        }
+
+        return this;
+    }
 
     protected boolean hasNeighbor(Cell[][] grid, int x, int y, Class<?> type) {
         for (int dx = -1; dx <= 1; dx++) {
@@ -22,6 +28,7 @@ public abstract class Cell {
                 }
             }
         }
+
         return false;
     }
 

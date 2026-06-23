@@ -2,7 +2,7 @@ package com.example.firstapp.fragments;
 
 import android.graphics.Color;
 
-public class EarthCell extends StandardCell {
+public class EarthCell extends Cell {
     @Override
     public int getColor() {
         return Color.rgb(120, 80, 40);

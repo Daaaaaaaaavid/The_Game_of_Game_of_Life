@@ -2,7 +2,7 @@ package com.example.firstapp.fragments;
 
 import android.graphics.Color;
 
-public class FireCell extends StandardCell {
+public class FireCell extends Cell {
     @Override
     public int getColor() {
         return Color.RED;
