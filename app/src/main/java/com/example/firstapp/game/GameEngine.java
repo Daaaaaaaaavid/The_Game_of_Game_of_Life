@@ -8,10 +8,11 @@ public class GameEngine {
     private final int rows;
     private final Random random = new Random();
 
-    private static final double WATER_BIRTH_CHANCE = 0.35;
-    private static final double FIRE_BIRTH_CHANCE = 0.25;
-    private static final double WATER_DECAY_CHANCE = 0.03;
-    private static final double FIRE_DECAY_CHANCE = 0.08;
+    private static final double WATER_DECAY_CHANCE = 0.002;
+    private static final double FIRE_DECAY_CHANCE = 0.002;
+
+    private static final double WATER_BIRTH_CHANCE = 0.85;
+    private static final double FIRE_BIRTH_CHANCE = 0.85;
 
     public GameEngine(int cols, int rows) {
         this.cols = cols;
@@ -68,31 +69,35 @@ public class GameEngine {
     }
 
     private boolean survives(CellType type, int x, int y, int neighbors) {
-        if (neighbors != 2 && neighbors != 3) {
-            return false;
-        }
-
         if (type == CellType.WATER) {
             int waterNeighbors = grid.countNeighborsOfType(x, y, CellType.WATER);
 
-            if (waterNeighbors >= 4) {
+            if (grid.hasNeighborOfType(x, y, CellType.FIRE)) {
                 return false;
             }
 
-            return random.nextDouble() > WATER_DECAY_CHANCE;
+            if (waterNeighbors >= 6) {
+                return false;
+            }
+
+            return neighbors >= 1 && neighbors <= 4 && random.nextDouble() > WATER_DECAY_CHANCE;
         }
 
         if (type == CellType.FIRE) {
             int fireNeighbors = grid.countNeighborsOfType(x, y, CellType.FIRE);
 
-            if (fireNeighbors >= 4) {
+            if (grid.hasNeighborOfType(x, y, CellType.WATER)) {
                 return false;
             }
 
-            return random.nextDouble() > FIRE_DECAY_CHANCE;
+            if (fireNeighbors >= 6) {
+                return false;
+            }
+
+            return neighbors >= 1 && neighbors <= 4 && random.nextDouble() > FIRE_DECAY_CHANCE;
         }
 
-        return true;
+        return neighbors == 2 || neighbors == 3;
     }
 
     private boolean canBeBorn(CellType type, int x, int y) {
@@ -136,13 +141,13 @@ public class GameEngine {
         if (type == CellType.WATER) {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
                     {0, 1}, {-1, 1}, {1, 1}, {-1, 0}, {1, 0}
-            }, 0.65);
+            }, 0.95);
         }
 
         if (type == CellType.FIRE) {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
                     {0, -1}, {-1, -1}, {1, -1}, {-1, 0}, {1, 0}
-            }, 0.55);
+            }, 0.95);
         }
 
         return new int[]{x, y};
