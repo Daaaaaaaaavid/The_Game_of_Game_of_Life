@@ -28,10 +28,10 @@ public class GameActivity extends AppCompatActivity {
         toolbar.setGravity(Gravity.CENTER);
         toolbar.setPadding(8, 8, 8, 8);
 
-        addCellButton(toolbar, "Feuer", CellType.FIRE);
-        addCellButton(toolbar, "Wasser", CellType.WATER);
-        addCellButton(toolbar, "Erde", CellType.EARTH);
-        addCellButton(toolbar, "Pflanze", CellType.PLANT);
+        addCellButton(toolbar, "🔥", CellType.FIRE);
+        addCellButton(toolbar, "💧", CellType.WATER);
+        addCellButton(toolbar, "🪨", CellType.EARTH);
+        addCellButton(toolbar, "🪴", CellType.PLANT);
 
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

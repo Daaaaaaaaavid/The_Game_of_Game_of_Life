@@ -19,14 +19,14 @@ public class GameView extends View {
     private final int rows = 160;
 
     private final GameEngine engine;
-    private final Paint paint = new Paint();
+    private final Paint cellPaint = new Paint();
     private final Handler handler = new Handler();
 
     private float cellWidth;
     private float cellHeight;
 
     private boolean running = true;
-    private int tickDelay = 200;
+    private final int tickDelay = 200;
 
     private CellType selectedCellType = CellType.FIRE;
 
@@ -36,8 +36,8 @@ public class GameView extends View {
         startLoop();
     }
 
-    public void setSelectedCellType(CellType type) {
-        selectedCellType = type;
+    public void setSelectedCellType(CellType selectedCellType) {
+        this.selectedCellType = selectedCellType;
     }
 
     private void startLoop() {
@@ -48,6 +48,7 @@ public class GameView extends View {
                     engine.step();
                     invalidate();
                 }
+
                 handler.postDelayed(this, tickDelay);
             }
         }, tickDelay);
@@ -70,14 +71,14 @@ public class GameView extends View {
                 Cell cell = grid.getCell(x, y);
 
                 if (cell != null) {
-                    paint.setColor(cell.getType().getColor());
+                    cellPaint.setColor(cell.getType().getColor());
 
                     canvas.drawRect(
                             x * cellWidth,
                             y * cellHeight,
                             (x + 1) * cellWidth,
                             (y + 1) * cellHeight,
-                            paint
+                            cellPaint
                     );
                 }
             }
