@@ -4,10 +4,12 @@ import android.graphics.Color;
 
 public enum CellType {
     EMPTY,
+    STANDARD,
     FIRE,
     WATER,
     EARTH,
-    PLANT;
+    PLANT,
+    SMOKE;
 
     public int getColor() {
         switch (this) {
@@ -15,6 +17,7 @@ public enum CellType {
             case WATER: return Color.BLUE;
             case EARTH: return Color.rgb(120, 80, 40);
             case PLANT: return Color.GREEN;
+            case SMOKE: return Color.GRAY;
             default: return Color.BLACK;
         }
     }

@@ -46,6 +46,16 @@ public class GameEngine {
 
                 CellType type = currentCell.getType();
 
+                if ((type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER))
+                        || (type == CellType.WATER && grid.hasNeighborOfType(x, y, CellType.FIRE))) {
+
+                    if (neighbors == 2 || neighbors == 3) {
+                        nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
+                    }
+
+                    continue;
+                }
+
                 if (type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER)) {
                     continue;
                 }
@@ -148,6 +158,14 @@ public class GameEngine {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
                     {0, -1}, {-1, -1}, {1, -1}, {-1, 0}, {1, 0}
             }, 0.95);
+        }
+
+        if (type == CellType.SMOKE) {
+            return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
+                    {0, -2}, {-1, -2}, {1, -2},
+                    {0, -1}, {-1, -1}, {1, -1},
+                    {-1, 0}, {1, 0}
+            }, 1.0);
         }
 
         return new int[]{x, y};
