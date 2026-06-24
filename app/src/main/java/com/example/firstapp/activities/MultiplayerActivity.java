@@ -43,24 +43,17 @@ public class MultiplayerActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         btnHostGame.setOnClickListener(v -> {
-            Toast.makeText(this,
-                    "Host Lobby Placeholder",
-                    Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MultiplayerActivity.this, MultiplayerGameActivity.class);
+            startActivity(intent);
         });
 
         btnJoinGame.setOnClickListener(v -> {
-            Toast.makeText(this,
-                    "Join Lobby Placeholder",
-                    Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MultiplayerActivity.this, MultiplayerGameActivity.class);
+            startActivity(intent);
         });
 
         btnRandomMatch.setOnClickListener(v -> {
-
-            Intent intent = new Intent(
-                    MultiplayerActivity.this,
-                    GameActivity.class
-            );
-
+            Intent intent = new Intent(MultiplayerActivity.this, MultiplayerGameActivity.class);
             startActivity(intent);
         });
     }
