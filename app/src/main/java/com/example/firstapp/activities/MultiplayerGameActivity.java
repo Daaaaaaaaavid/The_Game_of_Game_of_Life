@@ -1,7 +1,6 @@
 package com.example.firstapp.activities;
 
 import android.os.Bundle;
-import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -13,44 +12,36 @@ import com.example.firstapp.game.CellType;
 
 public class MultiplayerGameActivity extends AppCompatActivity {
 
-    private MultiplayerGameView gameView;
-    private TextView statusText;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        gameView = new MultiplayerGameView(this);
+        String roomId = getIntent().getStringExtra("roomId");
+        int playerId = getIntent().getIntExtra("playerId", 1);
+        boolean isHost = getIntent().getBooleanExtra("isHost", false);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
 
-        statusText = new TextView(this);
-        statusText.setGravity(Gravity.CENTER);
-        statusText.setTextSize(16);
-        statusText.setText("Multiplayer gestartet");
-        gameView.setStatusText(statusText);
+        TextView status = new TextView(this);
+        status.setText("Raum: " + roomId + " | Spieler " + playerId);
+
+        MultiplayerGameView gameView =
+                new MultiplayerGameView(this, roomId, playerId, isHost, status);
 
         LinearLayout toolbar = new LinearLayout(this);
-        toolbar.setOrientation(LinearLayout.HORIZONTAL);
-        toolbar.setGravity(Gravity.CENTER);
-        toolbar.setPadding(8, 8, 8, 8);
 
-        addCellButton(toolbar, "🔥", CellType.FIRE);
-        addCellButton(toolbar, "💧", CellType.WATER);
-        addCellButton(toolbar, "🟫", CellType.EARTH);
-        addCellButton(toolbar, "🌱", CellType.PLANT);
+        addButton(toolbar, "🔥", CellType.FIRE, gameView);
+        addButton(toolbar, "💧", CellType.WATER, gameView);
+        addButton(toolbar, "🟫", CellType.EARTH, gameView);
+        addButton(toolbar, "🌱", CellType.PLANT, gameView);
 
-        Button pauseButton = new Button(this);
-        pauseButton.setText("Pause");
-        pauseButton.setOnClickListener(v -> gameView.toggleRunning());
-        toolbar.addView(pauseButton, new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1
-        ));
+        Button startPause = new Button(this);
+        startPause.setText("Start/Pause");
+        startPause.setOnClickListener(v -> gameView.toggleRunning());
+        toolbar.addView(startPause);
 
-        root.addView(statusText);
+        root.addView(status);
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -61,15 +52,15 @@ public class MultiplayerGameActivity extends AppCompatActivity {
         setContentView(root);
     }
 
-    private void addCellButton(LinearLayout toolbar, String text, CellType cellType) {
+    private void addButton(
+            LinearLayout toolbar,
+            String text,
+            CellType type,
+            MultiplayerGameView gameView
+    ) {
         Button button = new Button(this);
         button.setText(text);
-        button.setOnClickListener(v -> gameView.setSelectedCellType(cellType));
-
-        toolbar.addView(button, new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1
-        ));
+        button.setOnClickListener(v -> gameView.setSelectedCellType(type));
+        toolbar.addView(button);
     }
 }

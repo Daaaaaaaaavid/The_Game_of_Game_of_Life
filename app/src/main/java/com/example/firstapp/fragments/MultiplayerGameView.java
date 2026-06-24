@@ -13,58 +13,164 @@ import com.example.firstapp.game.Cell;
 import com.example.firstapp.game.CellType;
 import com.example.firstapp.game.GameEngine;
 import com.example.firstapp.game.Grid;
+import com.google.firebase.database.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MultiplayerGameView extends View {
 
     private final int cols = 80;
     private final int rows = 160;
 
-    private final GameEngine engine;
-    private final Paint cellPaint = new Paint();
-    private final Paint playerOverlayPaint = new Paint();
+    private final GameEngine engine = new GameEngine(cols, rows);
+    private final int[][] owners = new int[cols][rows];
+
+    private final Paint paint = new Paint();
     private final Handler handler = new Handler();
 
-    private final int[][] owners = new int[cols][rows];
+    private final DatabaseReference roomRef;
+    private final int playerId;
+    private final boolean isHost;
+    private final TextView statusText;
+
+    private CellType selectedCellType = CellType.FIRE;
 
     private float cellWidth;
     private float cellHeight;
 
-    private boolean running = true;
-    private final int tickDelay = 200;
+    private boolean running = false;
+    private boolean applyingRemoteUpdate = false;
 
-    private CellType selectedCellType = CellType.FIRE;
-    private int currentPlayer = 1;
-
-    private TextView statusText;
-
-    public MultiplayerGameView(Context context) {
+    public MultiplayerGameView(
+            Context context,
+            String roomId,
+            int playerId,
+            boolean isHost,
+            TextView statusText
+    ) {
         super(context);
-        engine = new GameEngine(cols, rows);
+
+        this.playerId = playerId;
+        this.isHost = isHost;
+        this.statusText = statusText;
+
+        roomRef = FirebaseDatabase
+                .getInstance()
+                .getReference("rooms")
+                .child(roomId);
+
+        listenForCells();
+        listenForRunningState();
+
+        if (isHost) {
+            roomRef.child("host").setValue(playerId);
+        }
+
         startLoop();
     }
 
-    public void setStatusText(TextView statusText) {
-        this.statusText = statusText;
+    public void setSelectedCellType(CellType type) {
+        selectedCellType = type;
+    }
+
+    public void toggleRunning() {
+        running = !running;
+        roomRef.child("running").setValue(running);
         updateStatus();
     }
 
-    public void setSelectedCellType(CellType selectedCellType) {
-        this.selectedCellType = selectedCellType;
+    private void listenForRunningState() {
+        roomRef.child("running").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                Boolean value = snapshot.getValue(Boolean.class);
+                running = value != null && value;
+                updateStatus();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {}
+        });
+    }
+
+    private void listenForCells() {
+        roomRef.child("cells").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                applyingRemoteUpdate = true;
+
+                engine.getGrid().clear();
+
+                for (int x = 0; x < cols; x++) {
+                    for (int y = 0; y < rows; y++) {
+                        owners[x][y] = 0;
+                    }
+                }
+
+                for (DataSnapshot cellSnapshot : snapshot.getChildren()) {
+                    String key = cellSnapshot.getKey();
+                    if (key == null || !key.contains("_")) continue;
+
+                    String[] parts = key.split("_");
+                    int x = Integer.parseInt(parts[0]);
+                    int y = Integer.parseInt(parts[1]);
+
+                    String typeName = cellSnapshot.child("type").getValue(String.class);
+                    Integer owner = cellSnapshot.child("owner").getValue(Integer.class);
+
+                    if (typeName == null) continue;
+
+                    CellType type = CellType.valueOf(typeName);
+
+                    engine.setCell(x, y, type);
+                    owners[x][y] = owner == null ? 0 : owner;
+                }
+
+                applyingRemoteUpdate = false;
+                invalidate();
+                updateStatus();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {}
+        });
     }
 
     private void startLoop() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (running) {
+                if (running && isHost && !applyingRemoteUpdate) {
                     engine.step();
+                    uploadFullGrid();
                     invalidate();
-                    updateStatus();
                 }
 
-                handler.postDelayed(this, tickDelay);
+                updateStatus();
+                handler.postDelayed(this, 250);
             }
-        }, tickDelay);
+        }, 250);
+    }
+
+    private void uploadFullGrid() {
+        Map<String, Object> cells = new HashMap<>();
+        Grid grid = engine.getGrid();
+
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                Cell cell = grid.getCell(x, y);
+
+                if (cell != null) {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("type", cell.getType().name());
+                    data.put("owner", owners[x][y]);
+                    cells.put(x + "_" + y, data);
+                }
+            }
+        }
+
+        roomRef.child("cells").setValue(cells);
     }
 
     @Override
@@ -84,22 +190,15 @@ public class MultiplayerGameView extends View {
                 Cell cell = grid.getCell(x, y);
 
                 if (cell != null) {
-                    cellPaint.setColor(cell.getType().getColor());
+                    paint.setColor(cell.getType().getColor());
 
-                    float left = x * cellWidth;
-                    float top = y * cellHeight;
-                    float right = (x + 1) * cellWidth;
-                    float bottom = (y + 1) * cellHeight;
-
-                    canvas.drawRect(left, top, right, bottom, cellPaint);
-
-                    if (owners[x][y] == 1) {
-                        playerOverlayPaint.setColor(Color.argb(70, 0, 0, 255));
-                        canvas.drawRect(left, top, right, bottom, playerOverlayPaint);
-                    } else if (owners[x][y] == 2) {
-                        playerOverlayPaint.setColor(Color.argb(70, 255, 0, 0));
-                        canvas.drawRect(left, top, right, bottom, playerOverlayPaint);
-                    }
+                    canvas.drawRect(
+                            x * cellWidth,
+                            y * cellHeight,
+                            (x + 1) * cellWidth,
+                            (y + 1) * cellHeight,
+                            paint
+                    );
                 }
             }
         }
@@ -107,55 +206,58 @@ public class MultiplayerGameView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN ||
-                event.getAction() == MotionEvent.ACTION_MOVE) {
-
-            int x = (int) (event.getX() / cellWidth);
-            int y = (int) (event.getY() / cellHeight);
-
-            if (x >= 0 && x < cols && y >= 0 && y < rows) {
-                engine.setCell(x, y, selectedCellType);
-                owners[x][y] = currentPlayer;
-
-                currentPlayer = currentPlayer == 1 ? 2 : 1;
-
-                invalidate();
-                updateStatus();
-            }
+        if (event.getAction() != MotionEvent.ACTION_DOWN &&
+                event.getAction() != MotionEvent.ACTION_MOVE) {
+            return true;
         }
 
-        return true;
-    }
+        int x = (int) (event.getX() / cellWidth);
+        int y = (int) (event.getY() / cellHeight);
 
-    public void toggleRunning() {
-        running = !running;
+        if (x < 0 || x >= cols || y < 0 || y >= rows) {
+            return true;
+        }
+
+        engine.setCell(x, y, selectedCellType);
+        owners[x][y] = playerId;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("type", selectedCellType.name());
+        data.put("owner", playerId);
+
+        roomRef.child("cells").child(x + "_" + y).setValue(data);
+
+        invalidate();
         updateStatus();
+
+        return true;
     }
 
     private void updateStatus() {
         if (statusText == null) return;
 
-        int player1Cells = 0;
-        int player2Cells = 0;
+        int ownCells = 0;
+        int enemyCells = 0;
 
         Grid grid = engine.getGrid();
 
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
                 if (grid.getCell(x, y) != null) {
-                    if (owners[x][y] == 1) {
-                        player1Cells++;
-                    } else if (owners[x][y] == 2) {
-                        player2Cells++;
+                    if (owners[x][y] == playerId) {
+                        ownCells++;
+                    } else if (owners[x][y] != 0) {
+                        enemyCells++;
                     }
                 }
             }
         }
 
         statusText.setText(
-                "Spieler " + currentPlayer + " ist dran | " +
-                        "P1: " + player1Cells + " | " +
-                        "P2: " + player2Cells +
+                "Spieler " + playerId +
+                        (isHost ? " | Host" : " | Client") +
+                        " | Eigene Zellen: " + ownCells +
+                        " | Gegner: " + enemyCells +
                         (running ? " | Läuft" : " | Pausiert")
         );
     }

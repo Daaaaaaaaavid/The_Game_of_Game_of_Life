@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "620190088848",
+    "project_id": "the-game-of-game-of-life",
+    "storage_bucket": "the-game-of-game-of-life.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:620190088848:android:d93bc2778892323d5e6215",
+        "android_client_info": {
+          "package_name": "com.example.firstapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWRNjMKVDOfIfgLx7Dsn9Qs2QZzZrQ4hg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

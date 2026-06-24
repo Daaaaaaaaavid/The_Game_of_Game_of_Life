@@ -20,6 +20,14 @@ public class Grid {
         return rows;
     }
 
+    public void clear() {
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                cells[x][y] = null;
+            }
+        }
+    }
+
     public boolean isInside(int x, int y) {
         return x >= 0
                 && x < cols

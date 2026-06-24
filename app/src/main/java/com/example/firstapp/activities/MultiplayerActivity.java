@@ -43,12 +43,22 @@ public class MultiplayerActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         btnHostGame.setOnClickListener(v -> {
-            Intent intent = new Intent(MultiplayerActivity.this, MultiplayerGameActivity.class);
+            String roomId = String.valueOf(System.currentTimeMillis()).substring(8);
+
+            Intent intent = new Intent(this, MultiplayerGameActivity.class);
+            intent.putExtra("roomId", roomId);
+            intent.putExtra("playerId", 1);
+            intent.putExtra("isHost", true);
             startActivity(intent);
         });
 
         btnJoinGame.setOnClickListener(v -> {
-            Intent intent = new Intent(MultiplayerActivity.this, MultiplayerGameActivity.class);
+            String roomId = "1234"; // später aus EditText lesen
+
+            Intent intent = new Intent(this, MultiplayerGameActivity.class);
+            intent.putExtra("roomId", roomId);
+            intent.putExtra("playerId", 2);
+            intent.putExtra("isHost", false);
             startActivity(intent);
         });
 

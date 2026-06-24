@@ -6,7 +6,11 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.firstapp.R;
-
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import android.widget.Toast;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 public class MainActivity extends AppCompatActivity {
 
     boolean isOn = false;
@@ -15,6 +19,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        DatabaseReference ref =
+                FirebaseDatabase.getInstance().getReference("test");
+
+        ref.setValue("Hallo Firebase")
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Firebase Write erfolgreich", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Firebase Fehler: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
 
         Button singleplayerButton = findViewById(R.id.btnSingleplayer);
         Button multiplayerButton = findViewById(R.id.btnMultiplayer);
