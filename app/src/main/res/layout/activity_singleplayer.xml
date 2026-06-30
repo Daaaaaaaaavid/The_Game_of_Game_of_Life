@@ -33,20 +33,6 @@
         android:textColor="#BBBBBB"
         android:layout_marginBottom="48dp"/>
 
-    <Button
-        android:id="@+id/btnStandardMode"
-        android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:text="STANDARD MODE"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnTournamentMode"
-        android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:text="TOURNAMENT MODE"
-        android:layout_marginBottom="32dp"/>
-
     <TextView
         android:id="@+id/txtDifficulty"
         android:layout_width="wrap_content"

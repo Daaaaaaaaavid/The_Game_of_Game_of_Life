@@ -24,11 +24,11 @@ public class MultiplayerGameActivity extends AppCompatActivity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(0xFF111827);
+        root.setBackgroundColor(Color.WHITE);
 
-        // Permanente Raum-ID Anzeige (wird nicht überschrieben)
+        // Permanente Raum-ID Anzeige
         TextView roomIdDisplay = new TextView(this);
-        roomIdDisplay.setTextColor(Color.GREEN);
+        roomIdDisplay.setTextColor(Color.parseColor("#2E7D32")); // Dunkleres Grün für bessere Lesbarkeit auf Weiß
         roomIdDisplay.setTextSize(24);
         roomIdDisplay.getPaint().setFakeBoldText(true);
         roomIdDisplay.setGravity(Gravity.CENTER);
@@ -38,7 +38,7 @@ public class MultiplayerGameActivity extends AppCompatActivity {
 
         // Status Header (für dynamische Updates wie Spielstand/Status)
         TextView status = new TextView(this);
-        status.setTextColor(Color.WHITE);
+        status.setTextColor(Color.BLACK);
         status.setPadding(30, 0, 30, 30);
         status.setGravity(Gravity.CENTER);
         status.setTextSize(14);

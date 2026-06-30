@@ -159,7 +159,7 @@ public class MultiplayerGameView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawColor(0xFF111827);
+        canvas.drawColor(Color.WHITE);
         Grid grid = engine.getGrid();
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
