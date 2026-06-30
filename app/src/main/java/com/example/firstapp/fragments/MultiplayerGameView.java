@@ -20,8 +20,8 @@ import java.util.Map;
 
 public class MultiplayerGameView extends View {
 
-    private final int cols = 80;
-    private final int rows = 160;
+    private final int cols = 40; 
+    private final int rows = 60;
 
     private final GameEngine engine = new GameEngine(cols, rows);
     private final int[][] owners = new int[cols][rows];
@@ -35,49 +35,39 @@ public class MultiplayerGameView extends View {
     private final TextView statusText;
 
     private CellType selectedCellType = CellType.FIRE;
-
     private float cellWidth;
     private float cellHeight;
-
     private boolean running = false;
-    private boolean applyingRemoteUpdate = false;
 
-    public MultiplayerGameView(
-            Context context,
-            String roomId,
-            int playerId,
-            boolean isHost,
-            TextView statusText
-    ) {
+    public MultiplayerGameView(Context context, String roomId, int playerId, boolean isHost, TextView statusText) {
         super(context);
-
         this.playerId = playerId;
         this.isHost = isHost;
         this.statusText = statusText;
 
+        // Firebase Initialisierung mit der korrekten URL
         roomRef = FirebaseDatabase
-                .getInstance()
+                .getInstance("https://the-game-of-game-of-life-default-rtdb.europe-west1.firebasedatabase.app")
                 .getReference("rooms")
                 .child(roomId);
 
-        listenForCells();
-        listenForRunningState();
-
         if (isHost) {
-            roomRef.child("host").setValue(playerId);
+            roomRef.child("running").setValue(false);
+            roomRef.child("cells").removeValue();
         }
 
+        listenForRunningState();
+        listenForCells();
         startLoop();
     }
 
     public void setSelectedCellType(CellType type) {
-        selectedCellType = type;
+        this.selectedCellType = type;
     }
 
     public void toggleRunning() {
-        running = !running;
-        roomRef.child("running").setValue(running);
-        updateStatus();
+        this.running = !this.running;
+        roomRef.child("running").setValue(this.running);
     }
 
     private void listenForRunningState() {
@@ -86,9 +76,8 @@ public class MultiplayerGameView extends View {
             public void onDataChange(DataSnapshot snapshot) {
                 Boolean value = snapshot.getValue(Boolean.class);
                 running = value != null && value;
-                updateStatus();
+                invalidate();
             }
-
             @Override
             public void onCancelled(DatabaseError error) {}
         });
@@ -98,79 +87,109 @@ public class MultiplayerGameView extends View {
         roomRef.child("cells").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                applyingRemoteUpdate = true;
-
-                engine.getGrid().clear();
-
-                for (int x = 0; x < cols; x++) {
-                    for (int y = 0; y < rows; y++) {
-                        owners[x][y] = 0;
-                    }
-                }
-
-                for (DataSnapshot cellSnapshot : snapshot.getChildren()) {
-                    String key = cellSnapshot.getKey();
-                    if (key == null || !key.contains("_")) continue;
-
-                    String[] parts = key.split("_");
-                    int x = Integer.parseInt(parts[0]);
-                    int y = Integer.parseInt(parts[1]);
-
-                    String typeName = cellSnapshot.child("type").getValue(String.class);
-                    Integer owner = cellSnapshot.child("owner").getValue(Integer.class);
-
-                    if (typeName == null) continue;
-
-                    CellType type = CellType.valueOf(typeName);
-
-                    engine.setCell(x, y, type);
-                    owners[x][y] = owner == null ? 0 : owner;
-                }
-
-                applyingRemoteUpdate = false;
-                invalidate();
-                updateStatus();
+                // Host übernimmt nur Fremdzellen (vom Client), Client übernimmt alles
+                updateLocalGrid(snapshot);
             }
-
             @Override
             public void onCancelled(DatabaseError error) {}
         });
+    }
+
+    private void updateLocalGrid(DataSnapshot snapshot) {
+        if (!isHost) {
+            engine.getGrid().clear();
+            for (int x = 0; x < cols; x++) for (int y = 0; y < rows; y++) owners[x][y] = 0;
+        }
+
+        for (DataSnapshot cellSnap : snapshot.getChildren()) {
+            try {
+                String[] parts = cellSnap.getKey().split("_");
+                int x = Integer.parseInt(parts[0]);
+                int y = Integer.parseInt(parts[1]);
+                Integer owner = cellSnap.child("owner").getValue(Integer.class);
+                String typeName = cellSnap.child("type").getValue(String.class);
+
+                // Wenn Host: Nur Daten vom Client (Player 2) übernehmen
+                // Wenn Client: Alles übernehmen
+                if (!isHost || (owner != null && owner != playerId)) {
+                    if (typeName != null) {
+                        engine.setCell(x, y, CellType.valueOf(typeName));
+                        owners[x][y] = (owner != null) ? owner : 0;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        invalidate();
     }
 
     private void startLoop() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (running && isHost && !applyingRemoteUpdate) {
+                if (running && isHost) {
                     engine.step();
-                    uploadFullGrid();
-                    invalidate();
+                    syncGridToFirebase();
                 }
-
                 updateStatus();
-                handler.postDelayed(this, 250);
+                invalidate();
+                handler.postDelayed(this, 500);
             }
-        }, 250);
+        }, 500);
     }
 
-    private void uploadFullGrid() {
+    private void syncGridToFirebase() {
         Map<String, Object> cells = new HashMap<>();
         Grid grid = engine.getGrid();
-
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
                 Cell cell = grid.getCell(x, y);
-
                 if (cell != null) {
+                    if (owners[x][y] == 0) owners[x][y] = 1; // Zellen aus Evolution gehören Host
                     Map<String, Object> data = new HashMap<>();
                     data.put("type", cell.getType().name());
                     data.put("owner", owners[x][y]);
                     cells.put(x + "_" + y, data);
+                } else {
+                    owners[x][y] = 0;
                 }
             }
         }
-
         roomRef.child("cells").setValue(cells);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        canvas.drawColor(0xFF111827);
+        Grid grid = engine.getGrid();
+        for (int x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                Cell cell = grid.getCell(x, y);
+                if (cell != null) {
+                    paint.setColor(cell.getType().getColor());
+                    paint.setStyle(owners[x][y] == playerId ? Paint.Style.FILL_AND_STROKE : Paint.Style.FILL);
+                    canvas.drawRect(x * cellWidth + 1, y * cellHeight + 1, (x + 1) * cellWidth - 1, (y + 1) * cellHeight - 1, paint);
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
+            int x = (int) (event.getX() / cellWidth);
+            int y = (int) (event.getY() / cellHeight);
+            if (x >= 0 && x < cols && y >= 0 && y < rows) {
+                engine.setCell(x, y, selectedCellType);
+                owners[x][y] = playerId;
+                
+                Map<String, Object> data = new HashMap<>();
+                data.put("type", selectedCellType.name());
+                data.put("owner", playerId);
+                roomRef.child("cells").child(x + "_" + y).setValue(data);
+                invalidate();
+            }
+        }
+        return true;
     }
 
     @Override
@@ -179,86 +198,17 @@ public class MultiplayerGameView extends View {
         cellHeight = (float) h / rows;
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        canvas.drawColor(Color.WHITE);
-
-        Grid grid = engine.getGrid();
-
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
-                Cell cell = grid.getCell(x, y);
-
-                if (cell != null) {
-                    paint.setColor(cell.getType().getColor());
-
-                    canvas.drawRect(
-                            x * cellWidth,
-                            y * cellHeight,
-                            (x + 1) * cellWidth,
-                            (y + 1) * cellHeight,
-                            paint
-                    );
-                }
-            }
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() != MotionEvent.ACTION_DOWN &&
-                event.getAction() != MotionEvent.ACTION_MOVE) {
-            return true;
-        }
-
-        int x = (int) (event.getX() / cellWidth);
-        int y = (int) (event.getY() / cellHeight);
-
-        if (x < 0 || x >= cols || y < 0 || y >= rows) {
-            return true;
-        }
-
-        engine.setCell(x, y, selectedCellType);
-        owners[x][y] = playerId;
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("type", selectedCellType.name());
-        data.put("owner", playerId);
-
-        roomRef.child("cells").child(x + "_" + y).setValue(data);
-
-        invalidate();
-        updateStatus();
-
-        return true;
-    }
-
     private void updateStatus() {
         if (statusText == null) return;
-
-        int ownCells = 0;
-        int enemyCells = 0;
-
-        Grid grid = engine.getGrid();
-
+        int own = 0, enemy = 0;
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
-                if (grid.getCell(x, y) != null) {
-                    if (owners[x][y] == playerId) {
-                        ownCells++;
-                    } else if (owners[x][y] != 0) {
-                        enemyCells++;
-                    }
+                if (engine.getGrid().getCell(x, y) != null) {
+                    if (owners[x][y] == playerId) own++;
+                    else if (owners[x][y] != 0) enemy++;
                 }
             }
         }
-
-        statusText.setText(
-                "Spieler " + playerId +
-                        (isHost ? " | Host" : " | Client") +
-                        " | Eigene Zellen: " + ownCells +
-                        " | Gegner: " + enemyCells +
-                        (running ? " | Läuft" : " | Pausiert")
-        );
+        statusText.setText("Spieler " + playerId + " | Eigene: " + own + " | Gegner: " + enemy + (running ? " | LÄUFT" : " | PAUSE"));
     }
 }

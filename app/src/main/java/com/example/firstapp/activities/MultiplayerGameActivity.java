@@ -1,9 +1,11 @@
 package com.example.firstapp.activities;
 
 import android.os.Bundle;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.graphics.Color;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,44 +24,52 @@ public class MultiplayerGameActivity extends AppCompatActivity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(0xFF111827);
 
+        // Status Header
         TextView status = new TextView(this);
-        status.setText("Raum: " + roomId + " | Spieler " + playerId);
+        status.setTextColor(Color.WHITE);
+        status.setPadding(30, 30, 30, 30);
+        status.setGravity(Gravity.CENTER);
+        status.setTextSize(14);
+        status.setText("Verbindung zum Raum " + roomId + " wird hergestellt...");
 
-        MultiplayerGameView gameView =
-                new MultiplayerGameView(this, roomId, playerId, isHost, status);
+        MultiplayerGameView gameView = new MultiplayerGameView(this, roomId, playerId, isHost, status);
 
+        // Element-Steuerung
         LinearLayout toolbar = new LinearLayout(this);
+        toolbar.setOrientation(LinearLayout.HORIZONTAL);
+        toolbar.setGravity(Gravity.CENTER);
+        toolbar.setPadding(10, 20, 10, 20);
 
         addButton(toolbar, "🔥", CellType.FIRE, gameView);
         addButton(toolbar, "💧", CellType.WATER, gameView);
         addButton(toolbar, "🟫", CellType.EARTH, gameView);
         addButton(toolbar, "🌱", CellType.PLANT, gameView);
 
+        // Simulation-Steuerung
         Button startPause = new Button(this);
-        startPause.setText("Start/Pause");
+        startPause.setText("RUN/STOP");
         startPause.setOnClickListener(v -> gameView.toggleRunning());
         toolbar.addView(startPause);
 
+        Button btnExit = new Button(this);
+        btnExit.setText("EXIT");
+        btnExit.setOnClickListener(v -> finish());
+        toolbar.addView(btnExit);
+
         root.addView(status);
         root.addView(gameView, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1
-        ));
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
         root.addView(toolbar);
 
         setContentView(root);
     }
 
-    private void addButton(
-            LinearLayout toolbar,
-            String text,
-            CellType type,
-            MultiplayerGameView gameView
-    ) {
+    private void addButton(LinearLayout toolbar, String text, CellType type, MultiplayerGameView gameView) {
         Button button = new Button(this);
         button.setText(text);
+        button.setPadding(10, 0, 10, 0);
         button.setOnClickListener(v -> gameView.setSelectedCellType(type));
         toolbar.addView(button);
     }
