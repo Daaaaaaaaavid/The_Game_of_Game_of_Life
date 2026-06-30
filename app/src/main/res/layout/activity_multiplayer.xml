@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -37,59 +36,41 @@
         android:id="@+id/btnHostGame"
         android:layout_width="280dp"
         android:layout_height="wrap_content"
-        android:text="HOST GAME"
-        android:layout_marginBottom="16dp"/>
+        android:text="SPIEL HOSTEN"
+        android:layout_marginBottom="32dp"/>
 
-    <Button
-        android:id="@+id/btnJoinGame"
+    <View
         android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:text="JOIN GAME"
-        android:layout_marginBottom="16dp"/>
-
-    <Button
-        android:id="@+id/btnRandomMatch"
-        android:layout_width="280dp"
-        android:layout_height="wrap_content"
-        android:text="RANDOM MATCH"
+        android:layout_height="1dp"
+        android:background="#374151"
         android:layout_marginBottom="32dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Fake Lobby List"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        android:layout_marginBottom="16dp"/>
+        android:text="RAUM-ID DES PARTNERS:"
+        android:textColor="#9CA3AF"
+        android:textSize="12sp"
+        android:layout_marginBottom="8dp"/>
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <EditText
+        android:id="@+id/etRoomId"
+        android:layout_width="280dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="#1F2937">
+        android:hint="z.B. 54321"
+        android:textColorHint="#4B5563"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#3B82F6"
+        android:inputType="number"
+        android:textAlignment="center"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lobby #1 - Waiting"
-            android:textColor="#FFFFFF"
-            android:padding="8dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lobby #2 - 1/2 Players"
-            android:textColor="#FFFFFF"
-            android:padding="8dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lobby #3 - Full"
-            android:textColor="#FFFFFF"
-            android:padding="8dp"/>
-
-    </LinearLayout>
+    <Button
+        android:id="@+id/btnJoinGame"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:text="SPIEL BEITRETEN"
+        android:layout_marginBottom="16dp"/>
 
 </LinearLayout>
