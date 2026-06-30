@@ -26,13 +26,23 @@ public class MultiplayerGameActivity extends AppCompatActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF111827);
 
-        // Status Header
+        // Permanente Raum-ID Anzeige (wird nicht überschrieben)
+        TextView roomIdDisplay = new TextView(this);
+        roomIdDisplay.setTextColor(Color.GREEN);
+        roomIdDisplay.setTextSize(24);
+        roomIdDisplay.getPaint().setFakeBoldText(true);
+        roomIdDisplay.setGravity(Gravity.CENTER);
+        roomIdDisplay.setPadding(0, 50, 0, 10);
+        roomIdDisplay.setText("RAUM-ID: " + roomId);
+        root.addView(roomIdDisplay);
+
+        // Status Header (für dynamische Updates wie Spielstand/Status)
         TextView status = new TextView(this);
         status.setTextColor(Color.WHITE);
-        status.setPadding(30, 30, 30, 30);
+        status.setPadding(30, 0, 30, 30);
         status.setGravity(Gravity.CENTER);
         status.setTextSize(14);
-        status.setText("Verbindung zum Raum " + roomId + " wird hergestellt...");
+        status.setText("Verbindung zum Raum wird hergestellt...");
 
         MultiplayerGameView gameView = new MultiplayerGameView(this, roomId, playerId, isHost, status);
 
