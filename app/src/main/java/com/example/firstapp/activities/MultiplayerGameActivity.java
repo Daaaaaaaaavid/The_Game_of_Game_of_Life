@@ -55,17 +55,17 @@ public class MultiplayerGameActivity extends AppCompatActivity {
         Button barrierButton = new Button(this);
         barrierButton.setText("🚧 BARRIER");
         barrierButton.setOnClickListener(v -> gameView.setSelectedCellType(CellType.BARRIER));
-        topToolbar.addView(barrierButton);
+        topToolbar.addView(barrierButton, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.2f));
 
         Button startPause = new Button(this);
         startPause.setText("RUN/STOP");
         startPause.setOnClickListener(v -> gameView.toggleRunning());
-        topToolbar.addView(startPause);
+        topToolbar.addView(startPause, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
 
         Button btnExit = new Button(this);
         btnExit.setText("EXIT");
         btnExit.setOnClickListener(v -> finish());
-        topToolbar.addView(btnExit);
+        topToolbar.addView(btnExit, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.8f));
 
         // Zell-Steuerung (UNTERHALB der Simulation-Steuerung)
         LinearLayout cellToolbar = new LinearLayout(this);
@@ -92,8 +92,8 @@ public class MultiplayerGameActivity extends AppCompatActivity {
     private void addButton(LinearLayout toolbar, String text, CellType type, MultiplayerGameView gameView) {
         Button button = new Button(this);
         button.setText(text);
-        button.setPadding(10, 0, 10, 0);
+        button.setPadding(0, 0, 0, 0);
         button.setOnClickListener(v -> gameView.setSelectedCellType(type));
-        toolbar.addView(button);
+        toolbar.addView(button, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
     }
 }

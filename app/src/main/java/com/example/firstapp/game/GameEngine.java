@@ -8,8 +8,9 @@ public class GameEngine {
     private final int rows;
     private final Random random = new Random();
 
-    private static final double WATER_DECAY_CHANCE = 0.002;
-    private static final double FIRE_DECAY_CHANCE = 0.002;
+    // Reduzierte Zerfallswahrscheinlichkeiten (langsamer verschwinden)
+    private static final double WATER_DECAY_CHANCE = 0.0001;
+    private static final double FIRE_DECAY_CHANCE = 0.0001;
     private static final double SMOKE_DECAY_CHANCE = 0.02;
 
     private static final double WATER_BIRTH_CHANCE = 0.85;
@@ -49,31 +50,29 @@ public class GameEngine {
 
                 CellType type = currentCell.getType();
 
-                // Barriers are indestructible and static
                 if (type == CellType.BARRIER) {
                     nextGrid.setCell(x, y, currentCell);
                     continue;
                 }
 
-                // Smoke creation: Fire + Water
+                // Rauch-Entstehung: Feuer + Wasser
                 if ((type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER))
                         || (type == CellType.WATER && grid.hasNeighborOfType(x, y, CellType.FIRE))) {
                     nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
                     continue;
                 }
 
-                // Acid + Earth -> Smoke (Acid eats earth)
+                // Säure frisst Erde -> Rauch
                 if (type == CellType.EARTH && grid.hasNeighborOfType(x, y, CellType.ACID)) {
                     nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
                     continue;
                 }
 
-                // Sand absorbs Acid: Acid disappears near Sand
+                // Sand absorbiert Säure
                 if (type == CellType.ACID && grid.hasNeighborOfType(x, y, CellType.SAND)) {
                     continue; 
                 }
 
-                // Earth + Water -> Plant
                 if (type == CellType.EARTH && grid.hasNeighborOfType(x, y, CellType.WATER)) {
                     if (conwayNeighbors == 2 || conwayNeighbors == 3) {
                         nextGrid.setCell(x, y, CellFactory.create(CellType.PLANT));
@@ -174,7 +173,6 @@ public class GameEngine {
                 Cell cell = sourceGrid.getCell(x, y);
                 if (cell == null) continue;
 
-                // If a barrier is already here (from Conway phase or previous movement), don't overwrite it
                 if (movedGrid.getCell(x, y) != null && movedGrid.getCell(x, y).getType() == CellType.BARRIER) {
                     continue;
                 }
