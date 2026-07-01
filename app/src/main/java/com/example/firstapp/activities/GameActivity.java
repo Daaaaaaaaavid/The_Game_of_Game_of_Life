@@ -32,6 +32,8 @@ public class GameActivity extends AppCompatActivity {
         addCellButton(toolbar, "💧", CellType.WATER);
         addCellButton(toolbar, "🪨", CellType.EARTH);
         addCellButton(toolbar, "🪴", CellType.PLANT);
+        addCellButton(toolbar, "⏳", CellType.SAND);
+        addCellButton(toolbar, "🧪", CellType.ACID);
 
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

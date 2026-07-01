@@ -10,6 +10,7 @@ public class GameEngine {
 
     private static final double WATER_DECAY_CHANCE = 0.002;
     private static final double FIRE_DECAY_CHANCE = 0.002;
+    private static final double SMOKE_DECAY_CHANCE = 0.02;
 
     private static final double WATER_BIRTH_CHANCE = 0.85;
     private static final double FIRE_BIRTH_CHANCE = 0.85;
@@ -31,13 +32,17 @@ public class GameEngine {
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
                 Cell currentCell = grid.getCell(x, y);
-                int neighbors = grid.countLivingNeighbors(x, y);
+                
+                // Separate Conway life neighbors from physical cells
+                int conwayNeighbors = countConwayNeighbors(x, y);
+                int totalNeighbors = grid.countLivingNeighbors(x, y);
 
                 if (currentCell == null) {
-                    if (neighbors == 3) {
+                    // Birth only happens if exactly 3 Conway-life neighbors are present
+                    if (conwayNeighbors == 3) {
                         CellType birthType = determineBirthType(x, y);
 
-                        if (canBeBorn(birthType, x, y)) {
+                        if (birthType != null && canBeBorn(birthType, x, y)) {
                             nextGrid.setCell(x, y, CellFactory.create(birthType));
                         }
                     }
@@ -46,28 +51,36 @@ public class GameEngine {
 
                 CellType type = currentCell.getType();
 
+                // Smoke creation: Fire + Water
                 if ((type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER))
                         || (type == CellType.WATER && grid.hasNeighborOfType(x, y, CellType.FIRE))) {
-
-                    if (neighbors == 2 || neighbors == 3) {
-                        nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
-                    }
-
+                    nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
                     continue;
                 }
 
-                if (type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER)) {
+                // Acid + Earth -> Smoke (Acid eats earth)
+                if (type == CellType.EARTH && grid.hasNeighborOfType(x, y, CellType.ACID)) {
+                    nextGrid.setCell(x, y, CellFactory.create(CellType.SMOKE));
                     continue;
                 }
 
+                // Sand absorbs Acid: Acid disappears near Sand
+                if (type == CellType.ACID && grid.hasNeighborOfType(x, y, CellType.SAND)) {
+                    continue; // Acid cell is not added to nextGrid
+                }
+
+                // Earth + Water -> Plant
                 if (type == CellType.EARTH && grid.hasNeighborOfType(x, y, CellType.WATER)) {
-                    if (neighbors == 2 || neighbors == 3) {
+                    if (conwayNeighbors == 2 || conwayNeighbors == 3) {
                         nextGrid.setCell(x, y, CellFactory.create(CellType.PLANT));
                     }
                     continue;
                 }
 
-                if (!survives(type, x, y, neighbors)) {
+                // Determine which neighbor count to use for survival
+                int neighborCountForSurvival = isConwayType(type) ? conwayNeighbors : totalNeighbors;
+
+                if (!survives(type, x, y, neighborCountForSurvival)) {
                     continue;
                 }
 
@@ -78,35 +91,54 @@ public class GameEngine {
         return nextGrid;
     }
 
+    private int countConwayNeighbors(int x, int y) {
+        int count = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+                int nx = x + dx;
+                int ny = y + dy;
+                if (grid.isInside(nx, ny)) {
+                    Cell cell = grid.getCell(nx, ny);
+                    if (cell != null && isConwayType(cell.getType())) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    private boolean isConwayType(CellType type) {
+        return type == CellType.FIRE || type == CellType.WATER || 
+               type == CellType.EARTH || type == CellType.PLANT || 
+               type == CellType.STANDARD;
+    }
+
     private boolean survives(CellType type, int x, int y, int neighbors) {
         if (type == CellType.WATER) {
             int waterNeighbors = grid.countNeighborsOfType(x, y, CellType.WATER);
-
-            if (grid.hasNeighborOfType(x, y, CellType.FIRE)) {
-                return false;
-            }
-
-            if (waterNeighbors >= 6) {
-                return false;
-            }
-
+            if (grid.hasNeighborOfType(x, y, CellType.FIRE)) return false;
+            if (waterNeighbors >= 6) return false;
             return neighbors >= 1 && neighbors <= 4 && random.nextDouble() > WATER_DECAY_CHANCE;
         }
 
         if (type == CellType.FIRE) {
             int fireNeighbors = grid.countNeighborsOfType(x, y, CellType.FIRE);
-
-            if (grid.hasNeighborOfType(x, y, CellType.WATER)) {
-                return false;
-            }
-
-            if (fireNeighbors >= 6) {
-                return false;
-            }
-
+            if (grid.hasNeighborOfType(x, y, CellType.WATER)) return false;
+            if (fireNeighbors >= 6) return false;
             return neighbors >= 1 && neighbors <= 4 && random.nextDouble() > FIRE_DECAY_CHANCE;
         }
 
+        if (type == CellType.SMOKE) {
+            return random.nextDouble() > SMOKE_DECAY_CHANCE;
+        }
+
+        if (type == CellType.SAND || type == CellType.ACID) {
+            return true; // Stable unless physics moves them or reaction happens
+        }
+
+        // Earth and Standard types now follow Conway survival rules
         return neighbors == 2 || neighbors == 3;
     }
 
@@ -121,14 +153,18 @@ public class GameEngine {
             return fireNeighbors <= 2 && random.nextDouble() < FIRE_BIRTH_CHANCE;
         }
 
+        if (type == CellType.SAND || type == CellType.ACID || type == CellType.SMOKE) {
+            return false; // Only placed or reacted, never born naturally
+        }
+
         return true;
     }
 
     private Grid applyMovement(Grid sourceGrid) {
         Grid movedGrid = new Grid(cols, rows);
 
-        for (int x = 0; x < cols; x++) {
-            for (int y = 0; y < rows; y++) {
+        for (int y = rows - 1; y >= 0; y--) {
+            for (int x = 0; x < cols; x++) {
                 Cell cell = sourceGrid.getCell(x, y);
                 if (cell == null) continue;
 
@@ -148,10 +184,16 @@ public class GameEngine {
     }
 
     private int[] getMoveTarget(Grid sourceGrid, Grid movedGrid, CellType type, int x, int y) {
-        if (type == CellType.WATER) {
+        if (type == CellType.WATER || type == CellType.ACID) {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
                     {0, 1}, {-1, 1}, {1, 1}, {-1, 0}, {1, 0}
             }, 0.95);
+        }
+
+        if (type == CellType.SAND) {
+            return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
+                    {0, 1}, {-1, 1}, {1, 1}
+            }, 0.98);
         }
 
         if (type == CellType.FIRE) {
@@ -162,10 +204,8 @@ public class GameEngine {
 
         if (type == CellType.SMOKE) {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
-                    {0, -2}, {-1, -2}, {1, -2},
-                    {0, -1}, {-1, -1}, {1, -1},
-                    {-1, 0}, {1, 0}
-            }, 1.0);
+                    {0, -1}, {-1, -1}, {1, -1}, {-2, -1}, {2, -1}, {-1, 0}, {1, 0}
+            }, 0.8);
         }
 
         return new int[]{x, y};
@@ -206,6 +246,9 @@ public class GameEngine {
         int water = grid.countNeighborsOfType(x, y, CellType.WATER);
         int earth = grid.countNeighborsOfType(x, y, CellType.EARTH);
         int plant = grid.countNeighborsOfType(x, y, CellType.PLANT);
+
+        // If no life-types are nearby, nothing should be born (ignore sand/acid/smoke)
+        if (fire == 0 && water == 0 && earth == 0 && plant == 0) return null;
 
         if (plant >= fire && plant >= water && plant >= earth) return CellType.PLANT;
         if (earth >= fire && earth >= water) return CellType.EARTH;

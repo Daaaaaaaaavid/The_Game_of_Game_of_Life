@@ -56,6 +56,8 @@ public class MultiplayerGameActivity extends AppCompatActivity {
         addButton(toolbar, "💧", CellType.WATER, gameView);
         addButton(toolbar, "🟫", CellType.EARTH, gameView);
         addButton(toolbar, "🌱", CellType.PLANT, gameView);
+        addButton(toolbar, "⏳", CellType.SAND, gameView);
+        addButton(toolbar, "🧪", CellType.ACID, gameView);
 
         // Simulation-Steuerung
         Button startPause = new Button(this);
