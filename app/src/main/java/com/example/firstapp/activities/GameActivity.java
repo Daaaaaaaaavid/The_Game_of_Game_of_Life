@@ -23,17 +23,32 @@ public class GameActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
 
-        LinearLayout toolbar = new LinearLayout(this);
-        toolbar.setOrientation(LinearLayout.HORIZONTAL);
-        toolbar.setGravity(Gravity.CENTER);
-        toolbar.setPadding(8, 8, 8, 8);
+        // Top toolbar for special items like Barriers
+        LinearLayout topToolbar = new LinearLayout(this);
+        topToolbar.setOrientation(LinearLayout.HORIZONTAL);
+        topToolbar.setGravity(Gravity.CENTER);
+        topToolbar.setPadding(8, 8, 8, 0);
 
-        addCellButton(toolbar, "🔥", CellType.FIRE);
-        addCellButton(toolbar, "💧", CellType.WATER);
-        addCellButton(toolbar, "🪨", CellType.EARTH);
-        addCellButton(toolbar, "🪴", CellType.PLANT);
-        addCellButton(toolbar, "⏳", CellType.SAND);
-        addCellButton(toolbar, "🧪", CellType.ACID);
+        Button barrierButton = new Button(this);
+        barrierButton.setText("🚧 BARRIER");
+        barrierButton.setOnClickListener(v -> gameView.setSelectedCellType(CellType.BARRIER));
+        topToolbar.addView(barrierButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        // Bottom toolbar for cell types
+        LinearLayout cellToolbar = new LinearLayout(this);
+        cellToolbar.setOrientation(LinearLayout.HORIZONTAL);
+        cellToolbar.setGravity(Gravity.CENTER);
+        cellToolbar.setPadding(8, 8, 8, 8);
+
+        addCellButton(cellToolbar, "🔥", CellType.FIRE);
+        addCellButton(cellToolbar, "💧", CellType.WATER);
+        addCellButton(cellToolbar, "🪨", CellType.EARTH);
+        addCellButton(cellToolbar, "🪴", CellType.PLANT);
+        addCellButton(cellToolbar, "⏳", CellType.SAND);
+        addCellButton(cellToolbar, "🧪", CellType.ACID);
 
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -41,10 +56,8 @@ public class GameActivity extends AppCompatActivity {
                 1
         ));
 
-        root.addView(toolbar, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        root.addView(topToolbar);
+        root.addView(cellToolbar);
 
         setContentView(root);
     }

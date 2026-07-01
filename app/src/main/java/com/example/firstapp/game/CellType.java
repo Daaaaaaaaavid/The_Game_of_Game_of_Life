@@ -11,7 +11,8 @@ public enum CellType {
     PLANT,
     SMOKE,
     SAND,
-    ACID;
+    ACID,
+    BARRIER;
 
     public int getColor() {
         switch (this) {
@@ -21,7 +22,8 @@ public enum CellType {
             case PLANT: return Color.GREEN;
             case SMOKE: return Color.GRAY;
             case SAND: return Color.rgb(240, 200, 100);
-            case ACID: return Color.rgb(150, 255, 0); // Bright green/lime
+            case ACID: return Color.rgb(150, 255, 0);
+            case BARRIER: return Color.BLACK;
             default: return Color.BLACK;
         }
     }

@@ -28,7 +28,7 @@ public class MultiplayerGameActivity extends AppCompatActivity {
 
         // Permanente Raum-ID Anzeige
         TextView roomIdDisplay = new TextView(this);
-        roomIdDisplay.setTextColor(Color.parseColor("#2E7D32")); // Dunkleres Grün für bessere Lesbarkeit auf Weiß
+        roomIdDisplay.setTextColor(Color.parseColor("#2E7D32"));
         roomIdDisplay.setTextSize(24);
         roomIdDisplay.getPaint().setFakeBoldText(true);
         roomIdDisplay.setGravity(Gravity.CENTER);
@@ -36,7 +36,7 @@ public class MultiplayerGameActivity extends AppCompatActivity {
         roomIdDisplay.setText("RAUM-ID: " + roomId);
         root.addView(roomIdDisplay);
 
-        // Status Header (für dynamische Updates wie Spielstand/Status)
+        // Status Header
         TextView status = new TextView(this);
         status.setTextColor(Color.BLACK);
         status.setPadding(30, 0, 30, 30);
@@ -46,34 +46,45 @@ public class MultiplayerGameActivity extends AppCompatActivity {
 
         MultiplayerGameView gameView = new MultiplayerGameView(this, roomId, playerId, isHost, status);
 
-        // Element-Steuerung
-        LinearLayout toolbar = new LinearLayout(this);
-        toolbar.setOrientation(LinearLayout.HORIZONTAL);
-        toolbar.setGravity(Gravity.CENTER);
-        toolbar.setPadding(10, 20, 10, 20);
+        // Simulations-Steuerung und Barrier (OBERHALB der Zellbuttons)
+        LinearLayout topToolbar = new LinearLayout(this);
+        topToolbar.setOrientation(LinearLayout.HORIZONTAL);
+        topToolbar.setGravity(Gravity.CENTER);
+        topToolbar.setPadding(10, 10, 10, 0);
 
-        addButton(toolbar, "🔥", CellType.FIRE, gameView);
-        addButton(toolbar, "💧", CellType.WATER, gameView);
-        addButton(toolbar, "🟫", CellType.EARTH, gameView);
-        addButton(toolbar, "🌱", CellType.PLANT, gameView);
-        addButton(toolbar, "⏳", CellType.SAND, gameView);
-        addButton(toolbar, "🧪", CellType.ACID, gameView);
+        Button barrierButton = new Button(this);
+        barrierButton.setText("🚧 BARRIER");
+        barrierButton.setOnClickListener(v -> gameView.setSelectedCellType(CellType.BARRIER));
+        topToolbar.addView(barrierButton);
 
-        // Simulation-Steuerung
         Button startPause = new Button(this);
         startPause.setText("RUN/STOP");
         startPause.setOnClickListener(v -> gameView.toggleRunning());
-        toolbar.addView(startPause);
+        topToolbar.addView(startPause);
 
         Button btnExit = new Button(this);
         btnExit.setText("EXIT");
         btnExit.setOnClickListener(v -> finish());
-        toolbar.addView(btnExit);
+        topToolbar.addView(btnExit);
+
+        // Zell-Steuerung (UNTERHALB der Simulation-Steuerung)
+        LinearLayout cellToolbar = new LinearLayout(this);
+        cellToolbar.setOrientation(LinearLayout.HORIZONTAL);
+        cellToolbar.setGravity(Gravity.CENTER);
+        cellToolbar.setPadding(10, 0, 10, 20);
+
+        addButton(cellToolbar, "🔥", CellType.FIRE, gameView);
+        addButton(cellToolbar, "💧", CellType.WATER, gameView);
+        addButton(cellToolbar, "🟫", CellType.EARTH, gameView);
+        addButton(cellToolbar, "🌱", CellType.PLANT, gameView);
+        addButton(cellToolbar, "⏳", CellType.SAND, gameView);
+        addButton(cellToolbar, "🧪", CellType.ACID, gameView);
 
         root.addView(status);
         root.addView(gameView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1));
-        root.addView(toolbar);
+        root.addView(topToolbar);
+        root.addView(cellToolbar);
 
         setContentView(root);
     }

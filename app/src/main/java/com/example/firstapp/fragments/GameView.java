@@ -94,7 +94,11 @@ public class GameView extends View {
             int y = (int) (event.getY() / cellHeight);
 
             if (x >= 0 && x < cols && y >= 0 && y < rows) {
-                engine.setCell(x, y, selectedCellType);
+                if (selectedCellType == CellType.BARRIER) {
+                    engine.setBarrier(x, y);
+                } else {
+                    engine.setCell(x, y, selectedCellType);
+                }
                 invalidate();
             }
         }

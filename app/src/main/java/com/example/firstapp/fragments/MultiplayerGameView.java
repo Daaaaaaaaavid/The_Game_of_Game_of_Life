@@ -45,7 +45,6 @@ public class MultiplayerGameView extends View {
         this.isHost = isHost;
         this.statusText = statusText;
 
-        // Firebase Initialisierung mit der korrekten URL
         roomRef = FirebaseDatabase
                 .getInstance("https://the-game-of-game-of-life-default-rtdb.europe-west1.firebasedatabase.app")
                 .getReference("rooms")
@@ -87,7 +86,6 @@ public class MultiplayerGameView extends View {
         roomRef.child("cells").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                // Host übernimmt nur Fremdzellen (vom Client), Client übernimmt alles
                 updateLocalGrid(snapshot);
             }
             @Override
@@ -109,8 +107,6 @@ public class MultiplayerGameView extends View {
                 Integer owner = cellSnap.child("owner").getValue(Integer.class);
                 String typeName = cellSnap.child("type").getValue(String.class);
 
-                // Wenn Host: Nur Daten vom Client (Player 2) übernehmen
-                // Wenn Client: Alles übernehmen
                 if (!isHost || (owner != null && owner != playerId)) {
                     if (typeName != null) {
                         engine.setCell(x, y, CellType.valueOf(typeName));
@@ -144,7 +140,7 @@ public class MultiplayerGameView extends View {
             for (int y = 0; y < rows; y++) {
                 Cell cell = grid.getCell(x, y);
                 if (cell != null) {
-                    if (owners[x][y] == 0) owners[x][y] = 1; // Zellen aus Evolution gehören Host
+                    if (owners[x][y] == 0) owners[x][y] = 1;
                     Map<String, Object> data = new HashMap<>();
                     data.put("type", cell.getType().name());
                     data.put("owner", owners[x][y]);
@@ -178,18 +174,36 @@ public class MultiplayerGameView extends View {
         if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
             int x = (int) (event.getX() / cellWidth);
             int y = (int) (event.getY() / cellHeight);
-            if (x >= 0 && x < cols && y >= 0 && y < rows) {
-                engine.setCell(x, y, selectedCellType);
-                owners[x][y] = playerId;
-                
-                Map<String, Object> data = new HashMap<>();
-                data.put("type", selectedCellType.name());
-                data.put("owner", playerId);
-                roomRef.child("cells").child(x + "_" + y).setValue(data);
-                invalidate();
+            
+            if (selectedCellType == CellType.BARRIER) {
+                placeBarrier(x, y);
+            } else {
+                placeCell(x, y, selectedCellType);
             }
         }
         return true;
+    }
+
+    private void placeCell(int x, int y, CellType type) {
+        if (x >= 0 && x < cols && y >= 0 && y < rows) {
+            engine.setCell(x, y, type);
+            owners[x][y] = playerId;
+            
+            Map<String, Object> data = new HashMap<>();
+            data.put("type", type.name());
+            data.put("owner", playerId);
+            roomRef.child("cells").child(x + "_" + y).setValue(data);
+            invalidate();
+        }
+    }
+
+    private void placeBarrier(int x, int y) {
+        // Barriers are 20x5
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 5; j++) {
+                placeCell(x + i, y + j, CellType.BARRIER);
+            }
+        }
     }
 
     @Override

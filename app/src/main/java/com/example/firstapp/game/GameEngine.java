@@ -33,12 +33,10 @@ public class GameEngine {
             for (int y = 0; y < rows; y++) {
                 Cell currentCell = grid.getCell(x, y);
                 
-                // Separate Conway life neighbors from physical cells
                 int conwayNeighbors = countConwayNeighbors(x, y);
                 int totalNeighbors = grid.countLivingNeighbors(x, y);
 
                 if (currentCell == null) {
-                    // Birth only happens if exactly 3 Conway-life neighbors are present
                     if (conwayNeighbors == 3) {
                         CellType birthType = determineBirthType(x, y);
 
@@ -50,6 +48,12 @@ public class GameEngine {
                 }
 
                 CellType type = currentCell.getType();
+
+                // Barriers are indestructible and static
+                if (type == CellType.BARRIER) {
+                    nextGrid.setCell(x, y, currentCell);
+                    continue;
+                }
 
                 // Smoke creation: Fire + Water
                 if ((type == CellType.FIRE && grid.hasNeighborOfType(x, y, CellType.WATER))
@@ -66,7 +70,7 @@ public class GameEngine {
 
                 // Sand absorbs Acid: Acid disappears near Sand
                 if (type == CellType.ACID && grid.hasNeighborOfType(x, y, CellType.SAND)) {
-                    continue; // Acid cell is not added to nextGrid
+                    continue; 
                 }
 
                 // Earth + Water -> Plant
@@ -77,7 +81,6 @@ public class GameEngine {
                     continue;
                 }
 
-                // Determine which neighbor count to use for survival
                 int neighborCountForSurvival = isConwayType(type) ? conwayNeighbors : totalNeighbors;
 
                 if (!survives(type, x, y, neighborCountForSurvival)) {
@@ -116,6 +119,8 @@ public class GameEngine {
     }
 
     private boolean survives(CellType type, int x, int y, int neighbors) {
+        if (type == CellType.BARRIER) return true;
+
         if (type == CellType.WATER) {
             int waterNeighbors = grid.countNeighborsOfType(x, y, CellType.WATER);
             if (grid.hasNeighborOfType(x, y, CellType.FIRE)) return false;
@@ -135,14 +140,15 @@ public class GameEngine {
         }
 
         if (type == CellType.SAND || type == CellType.ACID) {
-            return true; // Stable unless physics moves them or reaction happens
+            return true;
         }
 
-        // Earth and Standard types now follow Conway survival rules
         return neighbors == 2 || neighbors == 3;
     }
 
     private boolean canBeBorn(CellType type, int x, int y) {
+        if (type == CellType.BARRIER) return false;
+
         if (type == CellType.WATER) {
             int waterNeighbors = grid.countNeighborsOfType(x, y, CellType.WATER);
             return waterNeighbors <= 2 && random.nextDouble() < WATER_BIRTH_CHANCE;
@@ -154,7 +160,7 @@ public class GameEngine {
         }
 
         if (type == CellType.SAND || type == CellType.ACID || type == CellType.SMOKE) {
-            return false; // Only placed or reacted, never born naturally
+            return false;
         }
 
         return true;
@@ -167,6 +173,11 @@ public class GameEngine {
             for (int x = 0; x < cols; x++) {
                 Cell cell = sourceGrid.getCell(x, y);
                 if (cell == null) continue;
+
+                // If a barrier is already here (from Conway phase or previous movement), don't overwrite it
+                if (movedGrid.getCell(x, y) != null && movedGrid.getCell(x, y).getType() == CellType.BARRIER) {
+                    continue;
+                }
 
                 int[] target = getMoveTarget(sourceGrid, movedGrid, cell.getType(), x, y);
                 int tx = target[0];
@@ -184,6 +195,10 @@ public class GameEngine {
     }
 
     private int[] getMoveTarget(Grid sourceGrid, Grid movedGrid, CellType type, int x, int y) {
+        if (type == CellType.BARRIER) {
+            return new int[]{x, y};
+        }
+
         if (type == CellType.WATER || type == CellType.ACID) {
             return findRandomMove(sourceGrid, movedGrid, x, y, new int[][]{
                     {0, 1}, {-1, 1}, {1, 1}, {-1, 0}, {1, 0}
@@ -247,7 +262,6 @@ public class GameEngine {
         int earth = grid.countNeighborsOfType(x, y, CellType.EARTH);
         int plant = grid.countNeighborsOfType(x, y, CellType.PLANT);
 
-        // If no life-types are nearby, nothing should be born (ignore sand/acid/smoke)
         if (fire == 0 && water == 0 && earth == 0 && plant == 0) return null;
 
         if (plant >= fire && plant >= water && plant >= earth) return CellType.PLANT;
@@ -262,5 +276,13 @@ public class GameEngine {
 
     public void setCell(int x, int y, CellType type) {
         grid.setCell(x, y, CellFactory.create(type));
+    }
+
+    public void setBarrier(int x, int y) {
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 5; j++) {
+                grid.setCell(x + i, y + j, CellFactory.create(CellType.BARRIER));
+            }
+        }
     }
 }
